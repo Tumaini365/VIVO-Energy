@@ -107,7 +107,120 @@ if user_role == "👤 Staff Triage Portal":
             st.markdown("### 📊 Assessment Stratification")
             st.metric(label="Your Operational Risk Score", value=f"{total_score} / 12")
             
-            if total_score  0 else 0.0) for dept, count in st.session_state.dept_counts.items()}
+            if total_score <= 5:
+                strat_label = "GREEN"
+                st.success(f"### STATUS LEVEL: [ GREEN ] — Safe Parameters. Token: {generated_token}")
+            elif total_score <= 9:
+                strat_label = "YELLOW"
+                st.warning(f"### STATUS LEVEL: [ YELLOW ] — BURNOUT WATCHLIST. Token: {generated_token}")
+            else:
+                strat_label = "RED"
+                st.error(f"### STATUS LEVEL: [ RED ] — CRITICAL COGNITIVE RISK. Token: {generated_token}")
+                
+            st.session_state.staff_records.append({
+                "Reference Token": generated_token,
+                "Department": target_dept,
+                "Triage Score": total_score,
+                "Trigger Date": time.strftime("%Y-%m-%d"),
+                "Status": "Action Required" if strat_label != "GREEN" else "Compliant"
+            })
             
-            chart_vals = list(averages.values())
-            chart_idx = list(averages.keys())
+            st.session_state.token_registry[generated_token] = {
+                "Real Name": staff_name,
+                "Payroll ID": staff_id,
+                "Department": target_dept,
+                "Score": total_score
+            }
+            
+            st.session_state.dept_scores[target_dept] += float(total_score)
+            st.session_state.dept_counts[target_dept] += 1
+            st.info(f"🔒 Mapped under confidential reference token: **{generated_token}**.")
+
+# ==========================================
+# ROLE 2: CLINICIAN DIAGNOSTIC DESK
+# ==========================================
+elif user_role == "🩺 Clinician Diagnostic Desk":
+    st.title("🩺 Clinician Diagnostic Desk")
+    st.caption("Secure Intake Portal — Lead Consultant: Ezekiel Kiago Wangunyu")
+    st.markdown("---")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown("### Anonymized Intake Action Feed")
+        is_empty = check_empty_records(st.session_state.staff_records)
+        
+        if is_empty:
+            st.info("No active staff assessments recorded yet.")
+        else:
+            st.dataframe(pd.DataFrame(st.session_state.staff_records), use_container_width=True)
+            
+        st.markdown("---")
+        st.markdown("### 🔐 Secure Identity Matrix Lookup")
+        lookup_token = st.text_input("Enter Patient Reference Token to verify identity (e.g., VIVO-1000):")
+        if lookup_token:
+            if lookup_token in st.session_state.token_registry:
+                identity_data = st.session_state.token_registry[lookup_token]
+                st.success(f"**Identity Verified Successfully:**")
+                st.write(f"👤 **Staff Name:** {identity_data['Real Name']}")
+                st.write(f"🆔 **Payroll Number:** {identity_data['Payroll ID']}")
+                st.write(f"🏢 **Operating Unit:** {identity_data['Department']}")
+                st.write(f"📊 **Initial Triage Score:** {identity_data['Score']} / 12")
+            else:
+                st.error("Token not found or invalid lookup permissions.")
+        
+    with col2:
+        st.markdown("### Record On-Site Case Assessment")
+        with st.form("clinical_notes_form"):
+            is_empty_selection = check_empty_records(st.session_state.staff_records)
+            patient_options = ["No active profiles"] if is_empty_selection else [r["Reference Token"] for r in st.session_state.staff_records]
+            ref_id = st.selectbox("Select Patient Reference Token", patient_options)
+            mse_status = st.multiselect("MSE Indicators Observed:", ["Cognitive Slowing", "Affective Flattening", "Hyper-vigilance", "Extreme Exhaustion"])
+            clinical_notes = st.text_area("Treatment/EAP Recommendations")
+            save_clinical = st.form_submit_button("Commit to Secure Clinical Record")
+            
+            if save_clinical and not is_empty_selection:
+                st.session_state.clinical_records.append({
+                    "Reference Token": ref_id,
+                    "MSE Flags": ", ".join(mse_status),
+                    "Notes": clinical_notes,
+                    "Timestamp": time.strftime("%H:%M:%S")
+                })
+                st.success(f"Case file for {ref_id} safely appended.")
+
+# ==========================================
+# ROLE 3: HR & HSSEQ ADMIN DASHBOARD
+# ==========================================
+elif user_role == "📊 HR & HSSEQ Admin Dashboard":
+    st.title("📊 Macro-Level Organizational Health Dashboard")
+    st.caption("Anonymized Analytics & Fatigue Audits (Strictly No PII Displayed)")
+    st.markdown("---")
+    
+    total_screened = len(st.session_state.staff_records)
+    is_hr_empty = check_empty_records(st.session_state.staff_records)
+    
+    if is_hr_empty:
+        st.warning("⚠️ No data collected. Complete a screening in the Staff Portal first.")
+    else:
+        scores = [r["Triage Score"] for r in st.session_state.staff_records]
+        
+        green_count = get_green_count(scores)
+        yellow_count = get_yellow_count(scores)
+        red_count = get_red_count(scores)
+        
+        m1, m2, m3, m4 = st.columns(4)
+        m1.metric("Total Screened", f"{total_screened} Staff")
+        m2.metric("Green Tier", f"{int((green_count/total_screened)*100)}%")
+        m3.metric("Yellow Tier", f"{int((yellow_count/total_screened)*100)}%")
+        m4.metric("Red Tier", f"{int((red_count/total_screened)*100)}%")
+        
+        st.markdown("---")
+        col_chart1, col_chart2 = st.columns(2)
+        with col_chart1:
+            st.markdown("#### 📉 Average Fatigue Index Concentration by Department")
+            
+            # Replaced the complex dictionary comprehension with standard explicit loops
+            chart_vals = []
+            chart_idx = ["Corporate & HR", "Retail Management", "Depots & Logistics", "Engineering"]
+            
+            for dept in chart_idx:
