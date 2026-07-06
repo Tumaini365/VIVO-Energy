@@ -9,6 +9,13 @@ st.set_page_config(
     layout="wide"
 )
 
+# Global string variables declared completely outside form blocks to prevent structural truncation
+act_green = "Deploy Proactive Digital Self-Care Toolkit (Green Tier)"
+act_yellow = "Trigger 14-Day Micro-Learning Push Loops & Notify Peer Champion (Yellow Tier)"
+act_red_standdown = "Issue Immediate Short-Term Safety Stand-down & De-escalation Session (Red Tier)"
+act_red_referral = "Execute Expedited Priority Referral to Vivo Curative EAP Partner (Red Tier)"
+action_options_pool = [act_green, act_yellow, act_red_standdown, act_red_referral]
+
 # Helper functions to isolate variable processing from text parsers
 def check_empty_records(records_list):
     if len(records_list) == 0:
@@ -194,9 +201,3 @@ elif user_role == "🩺 Clinician Diagnostic Desk":
         with st.form("clinical_notes_form"):
             is_empty_selection = check_empty_records(st.session_state.staff_records)
             patient_options = ["No active profiles"] if is_empty_selection else [r["Reference Token"] for r in st.session_state.staff_records]
-            ref_id = st.selectbox("Select Patient Reference Token", patient_options)
-            mse_status = st.multiselect("MSE Indicators Observed:", ["Cognitive Slowing", "Affective Flattening", "Hyper-vigilance", "Extreme Exhaustion"])
-            
-            # Formatted choices using standalone strings to bypass brackets compilation error
-            act_green = "Deploy Proactive Digital Self-Care Toolkit (Green Tier)"
-            act_yellow = "Trigger 14-Day Micro-Learning Push Loops & Notify Peer Champion (Yellow Tier)"
