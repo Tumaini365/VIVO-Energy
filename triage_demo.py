@@ -9,6 +9,13 @@ st.set_page_config(
     layout="wide"
 )
 
+# Helper function to completely bypass inline logic checks on line 82
+def check_empty_records(records_list):
+    total_len = len(records_list)
+    if total_len == 0:
+        return True
+    return False
+
 # ==========================================
 # INITIALIZE SYSTEM MEMORY SPACE (SESSION STATE)
 # ==========================================
@@ -79,31 +86,7 @@ if user_role == "👤 Staff Triage Portal":
             st.markdown("### 📊 Assessment Stratification")
             st.metric(label="Your Operational Risk Score", value=f"{total_score} / 12")
             
-            if total_score  0:
-                st.session_state.clinical_records.append({
-                    "Reference Token": ref_id,
-                    "MSE Flags": ", ".join(mse_status),
-                    "Notes": clinical_notes,
-                    "Timestamp": time.strftime("%H:%M:%S")
-                })
-                st.success(f"Case file for {ref_id} safely appended.")
-
-# ==========================================
-# ROLE 3: HR & HSSEQ ADMIN DASHBOARD
-# ==========================================
-elif user_role == "📊 HR & HSSEQ Admin Dashboard":
-    st.title("📊 Macro-Level Organizational Health Dashboard")
-    st.caption("Anonymized Analytics & Fatigue Audits (Strictly No PII Displayed)")
-    st.markdown("---")
-    
-    total_screened = len(st.session_state.staff_records)
-    if total_screened == 0:
-        st.warning("⚠️ No data collected. Complete a screening in the Staff Portal first.")
-    else:
-        scores = [r["Triage Score"] for r in st.session_state.staff_records]
-        green_count = sum(1 for s in scores if s <= 5)
-        yellow_count = sum(1 for s in scores if 6 <= s <= 9)
-        red_count = sum(1 for s in scores if s >= 10)
+            if total_score = 10)
         
         m1, m2, m3, m4 = st.columns(4)
         m1.metric("Total Screened", f"{total_screened} Staff")
@@ -123,6 +106,3 @@ elif user_role == "📊 HR & HSSEQ Admin Dashboard":
         with col_chart2:
             st.markdown("#### 🛡️ Infrastructure Intervention Metrics")
             st.write(f"* **14-Day Micro-Learning Cues Delivered:** {yellow_count * 14} Pushes")
-            st.write(f"* **Active Clinical Cases Pending Intake:** {red_count} Red Alerts")
-            if len(st.session_state.clinical_records) > 0:
-                st.dataframe(pd.DataFrame(st.session_state.clinical_records), use_container_width=True)
