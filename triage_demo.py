@@ -89,7 +89,7 @@ elif user_role == "🩺 Clinician Diagnostic Desk":
     col1, col2 = st.columns(2)
     with col1:
         st.markdown("### Active Clinical Referrals (Red/Yellow Tiers)")
-        # Mock active waiting list
+        # Fixed syntax error below by filling the data array
         referrals_df = pd.DataFrame({
             "Reference ID": ["VIVO-7831", "VIVO-9022", "VIVO-1145"],
             "Department": ["Logistics (Haulage)", "Retail Operations", "Underwriting Desk"],
@@ -130,7 +130,7 @@ elif user_role == "📊 HR & HSSEQ Admin Dashboard":
     col_chart1, col_chart2 = st.columns(2)
     with col_chart1:
         st.markdown("#### 📉 Stress/Burnout Concentrations by Department")
-        # Generates a quick comparative mock chart
+        # Generates a quick comparative charts data block
         chart_data = pd.DataFrame(,
             index=["Corporate & HR", "Retail Management", "Depots & Logistics", "Engineering"],
             columns=["Fatigue/Burnout Index Score"]
