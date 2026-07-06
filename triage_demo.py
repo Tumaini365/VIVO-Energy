@@ -199,5 +199,5 @@ elif user_role == "🩺 Clinician Diagnostic Desk":
     with col2:
         st.markdown("### 🛠️ Record On-Site Case Assessment & Action")
         with st.form("clinical_notes_form"):
-            is_empty_selection = check_empty_records(st.session_state.staff_records)
-            patient_options = ["No active profiles"] if is_empty_selection else [r["Reference Token"] for r in st.session_state.staff_records]
+            # 🚀 ARCHITECTURE CHANGE: UNLOCKED DROPDOWN GATEWAY
+            # If HR list is empty, switches instantly to a manual free-text fallback token entry option
