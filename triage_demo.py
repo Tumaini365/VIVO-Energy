@@ -92,7 +92,6 @@ if user_role == "👤 Staff Triage Portal":
         "Always": 4
     }
     
-    # 🌟 NEW PITCHING FEATURE: CHOOSE ASSESSMENT DEPTH
     st.subheader("⚙️ Assessment Infrastructure Configuration")
     test_mode = st.selectbox(
         "Select Psychometric Protocol Layer:",
@@ -108,7 +107,6 @@ if user_role == "👤 Staff Triage Portal":
         
         st.markdown("---")
         
-        # --- MODE A: STANDARD 3-QUESTION TRIAGE ---
         if test_mode == "Standard 3-Question Rapid Safety Triage":
             st.subheader("Rapid Safety Pulse Check")
             q1 = st.radio("**[Q1] After an operational shift, I feel emotionally drained:**", ["Never", "Rarely", "Frequently", "Always"])
@@ -116,11 +114,9 @@ if user_role == "👤 Staff Triage Portal":
             q3 = st.radio("**[Q3] Anxiety regarding performance targets disrupts my sleep:**", ["Never", "Rarely", "Frequently", "Always"])
             submit_button = st.form_submit_button("Submit Rapid Safety Triage")
             
-        # --- MODE B: COMPLETE GAD-7 DIAGNOSIS ---
         else:
             st.subheader("Official GAD-7 Anxiety Diagnostic Module")
             st.markdown("*Over the last 2 weeks, how often have you been bothered by any of the following problems?*")
-            
             g1 = st.radio("1. Feeling nervous, anxious, or on edge:", ["Not at all", "Several days", "More than half the days", "Nearly every day"])
             g2 = st.radio("2. Not being able to stop or control worrying:", ["Not at all", "Several days", "More than half the days", "Nearly every day"])
             g3 = st.radio("3. Worrying too much about different things:", ["Not at all", "Several days", "More than half the days", "Nearly every day"])
@@ -134,16 +130,13 @@ if user_role == "👤 Staff Triage Portal":
         if not staff_name or not staff_id:
             st.error("⚠️ Error: Name and Payroll fields must be completed to securely generate your clinical token identifier.")
         else:
-            # Process score based on selected depth mode
             if test_mode == "Standard 3-Question Rapid Safety Triage":
                 total_score = score_map[q1] + score_map[q2] + score_map[q3]
                 max_possible = 12
-                # Stratification boundaries for 3-question mode
                 green_limit, yellow_limit = 5, 9
             else:
                 total_score = score_map[g1] + score_map[g2] + score_map[g3] + score_map[g4] + score_map[g5] + score_map[g6] + score_map[g7]
                 max_possible = 21
-                # Standardized clinical GAD-7 boundaries (0-4 Minimal, 5-9 Mild, 10-14 Moderate, 15+ Severe)
                 green_limit, yellow_limit = 4, 9
             
             generated_token = f"VIVO-{1000 + len(st.session_state.staff_records)}"
@@ -177,7 +170,6 @@ if user_role == "👤 Staff Triage Portal":
                 "Score": f"{total_score} / {max_possible}"
             }
             
-            # Standardize graphing tracking normalization
             normalized_value = (total_score / max_possible) * 10
             st.session_state.dept_scores[target_dept] += float(normalized_value)
             st.session_state.dept_counts[target_dept] += 1
@@ -212,3 +204,11 @@ elif user_role == "🩺 Clinician Diagnostic Desk":
                 st.write(f"👤 **Staff Name:** {identity_data['Real Name']}")
                 st.write(f"🆔 **Payroll Number:** {identity_data['Payroll ID']}")
                 st.write(f"🏢 **Operating Unit:** {identity_data['Department']}")
+                st.write(f"📊 **Initial Triage Score:** {identity_data['Score']}")
+            else:
+                st.error("Token not found or invalid lookup permissions.")
+        
+    with col2:
+        st.markdown("### 🛠️ Record On-Site Case Assessment & Early-Intervention Action")
+        with st.form("clinical_notes_form"):
+            is_empty_selection = check_empty_records(st.session_state.staff_records)
