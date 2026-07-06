@@ -89,7 +89,7 @@ elif user_role == "🩺 Clinician Diagnostic Desk":
     col1, col2 = st.columns(2)
     with col1:
         st.markdown("### Active Clinical Referrals (Red/Yellow Tiers)")
-        # Fixed syntax by completely populating arrays
+        # Explicit data declaration to avoid translation gaps
         referrals_df = pd.DataFrame({
             "Reference ID": ["VIVO-7831", "VIVO-9022", "VIVO-1145"],
             "Department": ["Logistics (Haulage)", "Retail Operations", "Underwriting Desk"],
@@ -130,7 +130,6 @@ elif user_role == "📊 HR & HSSEQ Admin Dashboard":
     col_chart1, col_chart2 = st.columns(2)
     with col_chart1:
         st.markdown("#### 📉 Stress/Burnout Concentrations by Department")
-        # Fixed syntax by completely populating arrays
         chart_data = pd.DataFrame(
             [2.4, 4.1, 8.7, 5.3],
             index=["Corporate & HR", "Retail Management", "Depots & Logistics", "Engineering"],
