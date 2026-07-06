@@ -81,7 +81,24 @@ if user_role == "👤 Staff Triage Portal":
     st.caption("Customized Cognitive Triage for Vivo Energy Kenya")
     st.markdown("---")
     
-    score_map = {"Never": 1, "Rarely": 2, "Frequently": 3, "Always": 4}
+    score_map = {
+        "Not at all": 0,
+        "Several days": 1,
+        "More than half the days": 2,
+        "Nearly every day": 3,
+        "Never": 1,
+        "Rarely": 2,
+        "Frequently": 3,
+        "Always": 4
+    }
+    
+    # 🌟 NEW PITCHING FEATURE: CHOOSE ASSESSMENT DEPTH
+    st.subheader("⚙️ Assessment Infrastructure Configuration")
+    test_mode = st.selectbox(
+        "Select Psychometric Protocol Layer:",
+        ["Standard 3-Question Rapid Safety Triage", "Comprehensive GAD-7 Psychometric Screening Protocol"]
+    )
+    st.markdown("---")
     
     with st.form("triage_form"):
         st.subheader("Personal Identification")
@@ -90,35 +107,63 @@ if user_role == "👤 Staff Triage Portal":
         target_dept = st.selectbox("Select Your Department:", ["Corporate & HR", "Retail Management", "Depots & Logistics", "Engineering"])
         
         st.markdown("---")
-        st.subheader("Psychometric Assessment Questions")
-        q1_choice = st.radio("**[Q1] After an operational shift, I feel emotionally drained:**", ["Never", "Rarely", "Frequently", "Always"])
-        q2_choice = st.radio("**[Q2] I find it difficult to concentrate or maintain safety focus:**", ["Never", "Rarely", "Frequently", "Always"])
-        q3_choice = st.radio("**[Q3] Anxiety regarding performance targets disrupts my sleep:**", ["Never", "Rarely", "Frequently", "Always"])
         
-        submit_button = st.form_submit_button("Submit Diagnostic Pulse Check")
+        # --- MODE A: STANDARD 3-QUESTION TRIAGE ---
+        if test_mode == "Standard 3-Question Rapid Safety Triage":
+            st.subheader("Rapid Safety Pulse Check")
+            q1 = st.radio("**[Q1] After an operational shift, I feel emotionally drained:**", ["Never", "Rarely", "Frequently", "Always"])
+            q2 = st.radio("**[Q2] I find it difficult to concentrate or maintain safety focus:**", ["Never", "Rarely", "Frequently", "Always"])
+            q3 = st.radio("**[Q3] Anxiety regarding performance targets disrupts my sleep:**", ["Never", "Rarely", "Frequently", "Always"])
+            submit_button = st.form_submit_button("Submit Rapid Safety Triage")
+            
+        # --- MODE B: COMPLETE GAD-7 DIAGNOSIS ---
+        else:
+            st.subheader("Official GAD-7 Anxiety Diagnostic Module")
+            st.markdown("*Over the last 2 weeks, how often have you been bothered by any of the following problems?*")
+            
+            g1 = st.radio("1. Feeling nervous, anxious, or on edge:", ["Not at all", "Several days", "More than half the days", "Nearly every day"])
+            g2 = st.radio("2. Not being able to stop or control worrying:", ["Not at all", "Several days", "More than half the days", "Nearly every day"])
+            g3 = st.radio("3. Worrying too much about different things:", ["Not at all", "Several days", "More than half the days", "Nearly every day"])
+            g4 = st.radio("4. Trouble relaxing:", ["Not at all", "Several days", "More than half the days", "Nearly every day"])
+            g5 = st.radio("5. Being so restless that it is hard to sit still:", ["Not at all", "Several days", "More than half the days", "Nearly every day"])
+            g6 = st.radio("6. Becoming easily annoyed or irritable:", ["Not at all", "Several days", "More than half the days", "Nearly every day"])
+            g7 = st.radio("7. Feeling afraid, as if something awful might happen:", ["Not at all", "Several days", "More than half the days", "Nearly every day"])
+            submit_button = st.form_submit_button("Submit Complete GAD-7 Psychometric Evaluation")
         
     if submit_button:
         if not staff_name or not staff_id:
             st.error("⚠️ Error: Name and Payroll fields must be completed to securely generate your clinical token identifier.")
         else:
-            total_score = score_map[q1_choice] + score_map[q2_choice] + score_map[q3_choice]
+            # Process score based on selected depth mode
+            if test_mode == "Standard 3-Question Rapid Safety Triage":
+                total_score = score_map[q1] + score_map[q2] + score_map[q3]
+                max_possible = 12
+                # Stratification boundaries for 3-question mode
+                green_limit, yellow_limit = 5, 9
+            else:
+                total_score = score_map[g1] + score_map[g2] + score_map[g3] + score_map[g4] + score_map[g5] + score_map[g6] + score_map[g7]
+                max_possible = 21
+                # Standardized clinical GAD-7 boundaries (0-4 Minimal, 5-9 Mild, 10-14 Moderate, 15+ Severe)
+                green_limit, yellow_limit = 4, 9
+            
             generated_token = f"VIVO-{1000 + len(st.session_state.staff_records)}"
             
             st.markdown("### 📊 Assessment Stratification")
-            st.metric(label="Your Operational Risk Score", value=f"{total_score} / 12")
+            st.metric(label=f"Your Score ({test_mode})", value=f"{total_score} / {max_possible}")
             
-            if total_score <= 5:
+            if total_score <= green_limit:
                 strat_label = "GREEN"
                 st.success(f"### STATUS LEVEL: [ GREEN ] — Safe Parameters. Token: {generated_token}")
-            elif total_score <= 9:
+            elif total_score <= yellow_limit:
                 strat_label = "YELLOW"
-                st.warning(f"### STATUS LEVEL: [ YELLOW ] — BURNOUT WATCHLIST. Token: {generated_token}")
+                st.warning(f"### STATUS LEVEL: [ YELLOW ] — WATCHLIST / EARLY INTERVENTION. Token: {generated_token}")
             else:
                 strat_label = "RED"
-                st.error(f"### STATUS LEVEL: [ RED ] — CRITICAL COGNITIVE RISK. Token: {generated_token}")
+                st.error(f"### STATUS LEVEL: [ RED ] — CRITICAL RISK / CLINICAL INTAKE REQUIRED. Token: {generated_token}")
                 
             st.session_state.staff_records.append({
                 "Reference Token": generated_token,
+                "Protocol": "Rapid Triage" if max_possible == 12 else "Full GAD-7",
                 "Department": target_dept,
                 "Triage Score": total_score,
                 "Trigger Date": time.strftime("%Y-%m-%d"),
@@ -129,10 +174,12 @@ if user_role == "👤 Staff Triage Portal":
                 "Real Name": staff_name,
                 "Payroll ID": staff_id,
                 "Department": target_dept,
-                "Score": total_score
+                "Score": f"{total_score} / {max_possible}"
             }
             
-            st.session_state.dept_scores[target_dept] += float(total_score)
+            # Standardize graphing tracking normalization
+            normalized_value = (total_score / max_possible) * 10
+            st.session_state.dept_scores[target_dept] += float(normalized_value)
             st.session_state.dept_counts[target_dept] += 1
             st.info(f"🔒 Mapped under confidential reference token: **{generated_token}**.")
 
@@ -165,62 +212,3 @@ elif user_role == "🩺 Clinician Diagnostic Desk":
                 st.write(f"👤 **Staff Name:** {identity_data['Real Name']}")
                 st.write(f"🆔 **Payroll Number:** {identity_data['Payroll ID']}")
                 st.write(f"🏢 **Operating Unit:** {identity_data['Department']}")
-                st.write(f"📊 **Initial Triage Score:** {identity_data['Score']} / 12")
-            else:
-                st.error("Token not found or invalid lookup permissions.")
-        
-    with col2:
-        st.markdown("### Record On-Site Case Assessment")
-        with st.form("clinical_notes_form"):
-            is_empty_selection = check_empty_records(st.session_state.staff_records)
-            patient_options = ["No active profiles"] if is_empty_selection else [r["Reference Token"] for r in st.session_state.staff_records]
-            ref_id = st.selectbox("Select Patient Reference Token", patient_options)
-            mse_status = st.multiselect("MSE Indicators Observed:", ["Cognitive Slowing", "Affective Flattening", "Hyper-vigilance", "Extreme Exhaustion"])
-            clinical_notes = st.text_area("Treatment/EAP Recommendations")
-            save_clinical = st.form_submit_button("Commit to Secure Clinical Record")
-            
-            if save_clinical and not is_empty_selection:
-                st.session_state.clinical_records.append({
-                    "Reference Token": ref_id,
-                    "MSE Flags": ", ".join(mse_status),
-                    "Notes": clinical_notes,
-                    "Timestamp": time.strftime("%H:%M:%S")
-                })
-                st.success(f"Case file for {ref_id} safely appended.")
-
-# ==========================================
-# ROLE 3: HR & HSSEQ ADMIN DASHBOARD
-# ==========================================
-elif user_role == "📊 HR & HSSEQ Admin Dashboard":
-    st.title("📊 Macro-Level Organizational Health Dashboard")
-    st.caption("Anonymized Analytics & Fatigue Audits (Strictly No PII Displayed)")
-    st.markdown("---")
-    
-    total_screened = len(st.session_state.staff_records)
-    is_hr_empty = check_empty_records(st.session_state.staff_records)
-    
-    if is_hr_empty:
-        st.warning("⚠️ No data collected. Complete a screening in the Staff Portal first.")
-    else:
-        scores = [r["Triage Score"] for r in st.session_state.staff_records]
-        
-        green_count = get_green_count(scores)
-        yellow_count = get_yellow_count(scores)
-        red_count = get_red_count(scores)
-        
-        m1, m2, m3, m4 = st.columns(4)
-        m1.metric("Total Screened", f"{total_screened} Staff")
-        m2.metric("Green Tier", f"{int((green_count/total_screened)*100)}%")
-        m3.metric("Yellow Tier", f"{int((yellow_count/total_screened)*100)}%")
-        m4.metric("Red Tier", f"{int((red_count/total_screened)*100)}%")
-        
-        st.markdown("---")
-        col_chart1, col_chart2 = st.columns(2)
-        with col_chart1:
-            st.markdown("#### 📉 Dynamic Fatigue Accumulation Chart")
-            
-            # Converts internal score database into a chart directly using a single data call
-            raw_scores_df = pd.DataFrame(st.session_state.staff_records)
-            chart_grouped = raw_scores_df.groupby("Department")["Triage Score"].mean()
-            
-            st.bar_chart(chart_grouped)
