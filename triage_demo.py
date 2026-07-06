@@ -125,7 +125,6 @@ if user_role == "👤 Staff Triage Portal":
                 raw_score = score_map[g1] + score_map[g2] + score_map[g3] + score_map[g4] + score_map[g5] + score_map[g6] + score_map[g7]
                 max_possible = 21
             
-            # Mathematical Normalization Implementation 
             norm_index = float(raw_score / max_possible)
             generated_token = f"VIVO-{1000 + len(st.session_state.staff_records)}"
             
@@ -197,7 +196,7 @@ elif user_role == "🩺 Clinician Diagnostic Desk":
             patient_options = ["No active profiles"] if is_empty_selection else [r["Reference Token"] for r in st.session_state.staff_records]
             ref_id = st.selectbox("Select Patient Reference Token", patient_options)
             mse_status = st.multiselect("MSE Indicators Observed:", ["Cognitive Slowing", "Affective Flattening", "Hyper-vigilance", "Extreme Exhaustion"])
-            clinical_action = st.selectbox(
-                "Select Clinical Intervention Action Execution Path:",
-                [
-                    "Deploy Proactive Digital Self-Care Toolkit (Green Tier)",
+            
+            # Formatted choices using standalone strings to bypass brackets compilation error
+            act_green = "Deploy Proactive Digital Self-Care Toolkit (Green Tier)"
+            act_yellow = "Trigger 14-Day Micro-Learning Push Loops & Notify Peer Champion (Yellow Tier)"
