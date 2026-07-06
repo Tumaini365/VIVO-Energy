@@ -217,10 +217,10 @@ elif user_role == "📊 HR & HSSEQ Admin Dashboard":
         st.markdown("---")
         col_chart1, col_chart2 = st.columns(2)
         with col_chart1:
-            st.markdown("#### 📉 Average Fatigue Index Concentration by Department")
+            st.markdown("#### 📉 Dynamic Fatigue Accumulation Chart")
             
-            # Replaced the complex dictionary comprehension with standard explicit loops
-            chart_vals = []
-            chart_idx = ["Corporate & HR", "Retail Management", "Depots & Logistics", "Engineering"]
+            # Converts internal score database into a chart directly using a single data call
+            raw_scores_df = pd.DataFrame(st.session_state.staff_records)
+            chart_grouped = raw_scores_df.groupby("Department")["Triage Score"].mean()
             
-            for dept in chart_idx:
+            st.bar_chart(chart_grouped)
