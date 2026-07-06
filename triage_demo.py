@@ -2,21 +2,18 @@ import streamlit as st
 import time
 import pandas as pd
 
-# Page configuration for clean corporate layout
 st.set_page_config(
     page_title="Tumaini 365 — Vivo Energy Portal",
     page_icon="🧠",
     layout="wide"
 )
 
-# Global string variables declared completely outside form blocks to prevent structural truncation
 act_green = "Deploy Proactive Digital Self-Care Toolkit (Green Tier)"
 act_yellow = "Trigger 14-Day Micro-Learning Push Loops & Notify Peer Champion (Yellow Tier)"
 act_red_standdown = "Issue Immediate Short-Term Safety Stand-down & De-escalation Session (Red Tier)"
 act_red_referral = "Execute Expedited Priority Referral to Vivo Curative EAP Partner (Red Tier)"
 action_options_pool = [act_green, act_yellow, act_red_standdown, act_red_referral]
 
-# Helper functions to isolate variable processing from text parsers
 def check_empty_records(records_list):
     if len(records_list) == 0:
         return True
@@ -44,16 +41,12 @@ def get_red_count(records_list):
             count += 1
     return count
 
-# ==========================================
-# INITIALIZE SYSTEM MEMORY SPACE
-# ==========================================
 if "initialized" not in st.session_state:
     st.session_state.initialized = True
     st.session_state.staff_records = []
     st.session_state.clinical_records = []
     st.session_state.token_registry = {}
 
-# --- SIDEBAR NAVIGATION ---
 st.sidebar.image("https://icons8.com", width=80)
 st.sidebar.title("Tumaini 365")
 st.sidebar.write("Wellness Infrastructure")
@@ -74,9 +67,6 @@ if st.sidebar.button("🧹 Reset Workspace"):
     time.sleep(0.5)
     st.rerun()
 
-# ==========================================
-# ROLE 1: STAFF TRIAGE PORTAL
-# ==========================================
 if user_role == "👤 Staff Triage Portal":
     st.title("🧠 Frontend Risk Stratification Filter")
     st.caption("Customized Cognitive Triage for Vivo Energy Kenya")
@@ -166,9 +156,6 @@ if user_role == "👤 Staff Triage Portal":
             }
             st.info(f"🔒 Mapped under confidential reference token: **{generated_token}**.")
 
-# ==========================================
-# ROLE 2: CLINICIAN DIAGNOSTIC DESK
-# ==========================================
 elif user_role == "🩺 Clinician Diagnostic Desk":
     st.title("🩺 Clinician Diagnostic Desk")
     st.caption("Secure Intake Portal — Lead Consultant: Ezekiel Kiago Wangunyu")
@@ -198,6 +185,15 @@ elif user_role == "🩺 Clinician Diagnostic Desk":
         
     with col2:
         st.markdown("### 🛠️ Record On-Site Case Assessment & Action")
-        with st.form("clinical_notes_form"):
-            # 🚀 ARCHITECTURE CHANGE: UNLOCKED DROPDOWN GATEWAY
-            # If HR list is empty, switches instantly to a manual free-text fallback token entry option
+        with st.form(key="notes_form_v2"):
+            is_empty_selection = check_empty_records(st.session_state.staff_records)
+            
+            if is_empty_selection:
+                ref_id = st.text_input("Patient Reference Token:", value="VIVO-1000")
+            else:
+                token_options_pool = [r["Reference Token"] for r in st.session_state.staff_records]
+                ref_id = st.selectbox("Select Patient Reference Token:", token_options_pool)
+                
+            mse_status = st.multiselect("MSE Indicators Observed:", ["Cognitive Slowing", "Affective Flattening", "Hyper-vigilance", "Extreme Exhaustion"])
+            clinical_action = st.selectbox("Select Intervention Pathway Execution:", action_options_pool)
+            clinical_notes = st.text_area("Specific Treatment & Follow-up Recommendations")
