@@ -1,199 +1,234 @@
-import streamlit as st
-import time
-import pandas as pd
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PHQ-9 Mental Health Assessment</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text: #1e293b;
+            --border: #e2e8f0;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.5;
+            padding: 2rem 1rem;
+            margin: 0;
+        }
+        .container {
+            max-width: 650px;
+            margin: 0 auto;
+            background: var(--card);
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        h1 { margin-top: 0; font-size: 1.75rem; color: #0f172a; }
+        p.instructions { color: #64748b; margin-bottom: 2rem; }
+        .question-block {
+            margin-bottom: 1.75rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+        .question-text { font-weight: 600; margin-bottom: 0.75rem; }
+        .options {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0.5rem;
+        }
+        @media(min-width: 480px) {
+            .options { grid-template-columns: repeat(4, 1fr); }
+        }
+        label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.75rem;
+            background: #f1f5f9;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            text-align: center;
+            transition: all 0.2s;
+        }
+        label:hover { background: #e2e8f0; }
+        input[type="radio"] { display: none; }
+        input[type="radio"]:checked + span { font-weight: bold; }
+        input[type="radio"]:checked ~ label {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        button {
+            width: 100%;
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 1rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 1rem;
+        }
+        button:hover { background: #1d4ed8; }
+        #result {
+            display: none;
+            margin-top: 2rem;
+            padding: 1.5rem;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+        .severity-minimal { background: #dcfce7; color: #166534; }
+        .severity-mild { background: #fef9c3; color: #854d0e; }
+        .severity-moderate { background: #ffedd5; color: #9a3412; }
+        .severity-severe { background: #fee2e2; color: #991b1b; }
+        .alert-box {
+            margin-top: 1rem;
+            background: #fff1f2;
+            border: 1px solid #fecdd3;
+            color: #9f1239;
+            padding: 1rem;
+            border-radius: 6px;
+            display: none;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
 
-st.set_page_config(
-    page_title="Tumaini 365 — Vivo Energy Portal",
-    page_icon="🧠",
-    layout="wide"
-)
-
-act_green = "Deploy Proactive Digital Self-Care Toolkit (Green Tier)"
-act_yellow = "Trigger 14-Day Micro-Learning Push Loops & Notify Peer Champion (Yellow Tier)"
-act_red_standdown = "Issue Immediate Short-Term Safety Stand-down & De-escalation Session (Red Tier)"
-act_red_referral = "Execute Expedited Priority Referral to Vivo Curative EAP Partner (Red Tier)"
-action_options_pool = [act_green, act_yellow, act_red_standdown, act_red_referral]
-
-def check_empty_records(records_list):
-    if len(records_list) == 0:
-        return True
-    return False
-
-def get_green_count(records_list):
-    count = 0
-    for r in records_list:
-        if r["Normalized Stress Index"] <= 0.35:
-            count += 1
-    return count
-
-def get_yellow_count(records_list):
-    count = 0
-    for r in records_list:
-        val = r["Normalized Stress Index"]
-        if val > 0.35 and val <= 0.65:
-            count += 1
-    return count
-
-def get_red_count(records_list):
-    count = 0
-    for r in records_list:
-        if r["Normalized Stress Index"] > 0.65:
-            count += 1
-    return count
-
-if "initialized" not in st.session_state:
-    st.session_state.initialized = True
-    st.session_state.staff_records = []
-    st.session_state.clinical_records = []
-    st.session_state.token_registry = {}
-
-st.sidebar.image("https://icons8.com", width=80)
-st.sidebar.title("Tumaini 365")
-st.sidebar.write("Wellness Infrastructure")
-st.sidebar.markdown("---")
-
-user_role = st.sidebar.radio(
-    "Choose your access role:",
-    ["👤 Staff Triage Portal", "🩺 Clinician Diagnostic Desk", "📊 HR & HSSEQ Admin Dashboard"],
-    index=0
-)
-
-st.sidebar.markdown("---")
-if st.sidebar.button("🧹 Reset Workspace"):
-    st.session_state.staff_records = []
-    st.session_state.clinical_records = []
-    st.session_state.token_registry = {}
-    st.sidebar.success("All dynamic entries cleared!")
-    time.sleep(0.5)
-    st.rerun()
-
-if user_role == "👤 Staff Triage Portal":
-    st.title("🧠 Frontend Risk Stratification Filter")
-    st.caption("Customized Cognitive Triage for Vivo Energy Kenya")
-    st.markdown("---")
+<div class="container">
+    <h1>Mental Health Assessment (PHQ-9)</h1>
+    <p class="instructions">Over the last 2 weeks, how often have you been bothered by any of the following problems?</p>
     
-    score_map = {
-        "Not at all": 0, "Several days": 1, "More than half the days": 2, "Nearly every day": 3,
-        "Never": 1, "Rarely": 2, "Frequently": 3, "Always": 4
-    }
-    
-    st.subheader("⚙️ Assessment Infrastructure Configuration")
-    test_mode = st.selectbox(
-        "Select Psychometric Protocol Layer:",
-        ["Standard 3-Question Rapid Safety Triage", "Comprehensive GAD-7 Psychometric Screening Protocol"]
-    )
-    st.markdown("---")
-    
-    with st.form("triage_form"):
-        st.subheader("Personal Identification")
-        staff_name = st.text_input("Full Name:", placeholder="e.g., John Kamau")
-        staff_id = st.text_input("Vivo Staff Payroll Number:", placeholder="e.g., VEK-8840")
-        target_dept = st.selectbox("Select Your Department:", ["Corporate & HR", "Retail Management", "Depots & Logistics", "Engineering"])
+    <form id="quizForm">
+        <!-- Questions will be auto-generated here by JavaScript -->
+        <div id="questionsContainer"></div>
         
-        st.markdown("---")
+        <button type="button" onclick="calculateScore()">Submit Assessment</button>
+    </form>
+
+    <div id="result"></div>
+    <div id="alertBox" class="alert-box">
+        ⚠️ Notice: Your responses indicate thoughts of self-harm. Please reach out to a professional or a crisis helpline immediately.
+    </div>
+</div>
+
+<script>
+    const questions = [
+        "Little interest or pleasure in doing things",
+        "Feeling down, depressed, or hopeless",
+        "Trouble falling or staying asleep, or sleeping too much",
+        "Feeling tired or having little energy",
+        "Poor appetite or overeating",
+        "Feeling bad about yourself — or that you are a failure or have let yourself or your family down",
+        "Trouble concentrating on things, such as reading the newspaper or watching television",
+        "Moving or speaking so slowly that other people could have noticed? Or the opposite — being so fidgety or restless that you have been moving around a lot more than usual",
+        "Thoughts that you would be better off dead or of hurting yourself in some way"
+    ];
+
+    const options = ["Not at all", "Several days", "More than half the days", "Nearly every day"];
+    const container = document.getElementById('questionsContainer');
+
+    // Dynamically build the questionnaire form
+    questions.forEach((q, qIdx) => {
+        const qBlock = document.createElement('div');
+        qBlock.className = 'question-block';
         
-        if test_mode == "Standard 3-Question Rapid Safety Triage":
-            st.subheader("Rapid Safety Pulse Check")
-            q1 = st.radio("**[Q1] After an operational shift, I feel emotionally drained:**", ["Never", "Rarely", "Frequently", "Always"])
-            q2 = st.radio("**[Q2] I find it difficult to concentrate or maintain safety focus:**", ["Never", "Rarely", "Frequently", "Always"])
-            q3 = st.radio("**[Q3] Anxiety regarding performance targets disrupts my sleep:**", ["Never", "Rarely", "Frequently", "Always"])
-            submit_button = st.form_submit_button("Submit Rapid Safety Triage")
+        const qText = document.createElement('div');
+        qText.className = 'question-text';
+        qText.innerText = `${qIdx + 1}. ${q}`;
+        qBlock.appendChild(qText);
+
+        const optionsDiv = document.createElement('div');
+        optionsDiv.className = 'options';
+
+        options.forEach((opt, oIdx) => {
+            const id = `q${qIdx}_o${oIdx}`;
             
-        else:
-            st.subheader("Official GAD-7 Anxiety Diagnostic Module")
-            st.markdown("*Over the last 2 weeks, how often have you been bothered by any of the following problems?*")
-            g1 = st.radio("1. Feeling nervous, anxious, or on edge:", ["Not at all", "Several days", "More than half the days", "Nearly every day"])
-            g2 = st.radio("2. Not being able to stop or control worrying:", ["Not at all", "Several days", "More than half the days", "Nearly every day"])
-            g3 = st.radio("3. Worrying too much about different things:", ["Not at all", "Several days", "More than half the days", "Nearly every day"])
-            g4 = st.radio("4. Trouble relaxing:", ["Not at all", "Several days", "More than half the days", "Nearly every day"])
-            g5 = st.radio("5. Being so restless that it is hard to sit still:", ["Not at all", "Several days", "More than half the days", "Nearly every day"])
-            g6 = st.radio("6. Becoming easily annoyed or irritable:", ["Not at all", "Several days", "More than half the days", "Nearly every day"])
-            g7 = st.radio("7. Feeling afraid, as if something awful might happen:", ["Not at all", "Several days", "More than half the days", "Nearly every day"])
-            submit_button = st.form_submit_button("Submit Complete GAD-7 Psychometric Evaluation")
-        
-    if submit_button:
-        if not staff_name or not staff_id:
-            st.error("⚠️ Error: Name and Payroll fields must be completed to securely generate your clinical token identifier.")
-        else:
-            if test_mode == "Standard 3-Question Rapid Safety Triage":
-                raw_score = score_map[q1] + score_map[q2] + score_map[q3]
-                max_possible = 12
-            else:
-                raw_score = score_map[g1] + score_map[g2] + score_map[g3] + score_map[g4] + score_map[g5] + score_map[g6] + score_map[g7]
-                max_possible = 21
-            
-            norm_index = float(raw_score / max_possible)
-            generated_token = f"VIVO-{1000 + len(st.session_state.staff_records)}"
-            
-            st.markdown("### 📊 Assessment Stratification")
-            st.metric(label=f"Your Raw Score ({test_mode})", value=f"{raw_score} / {max_possible}")
-            
-            if norm_index <= 0.35:
-                strat_label = "GREEN"
-                st.success(f"### STATUS LEVEL: [ GREEN ] — Safe Parameters. Token: {generated_token}")
-            elif norm_index <= 0.65:
-                strat_label = "YELLOW"
-                st.warning(f"### STATUS LEVEL: [ YELLOW ] — WATCHLIST / EARLY INTERVENTION. Token: {generated_token}")
-            else:
-                strat_label = "RED"
-                st.error(f"### STATUS LEVEL: [ RED ] — CRITICAL RISK / CLINICAL INTAKE REQUIRED. Token: {generated_token}")
-                
-            st.session_state.staff_records.append({
-                "Reference Token": generated_token,
-                "Protocol": "Rapid Triage" if max_possible == 12 else "Full GAD-7",
-                "Department": target_dept,
-                "Raw Score": raw_score,
-                "Normalized Stress Index": round(norm_index, 2),
-                "Trigger Date": time.strftime("%Y-%m-%d"),
-                "Status": "Action Required" if strat_label != "GREEN" else "Compliant"
-            })
-            
-            st.session_state.token_registry[generated_token] = {
-                "Real Name": staff_name,
-                "Payroll ID": staff_id,
-                "Department": target_dept,
-                "Score": f"{raw_score} / {max_possible} (Index: {round(norm_index, 2)})"
+            const input = document.createElement('input');
+            input.type = 'radio';
+            input.name = `q${qIdx}`;
+            input.value = oIdx;
+            input.id = id;
+            input.required = true;
+
+            const label = document.createElement('label');
+            label.htmlFor = id;
+            label.innerText = opt;
+
+            optionsDiv.appendChild(input);
+            optionsDiv.appendChild(label);
+        });
+
+        qBlock.appendChild(optionsDiv);
+        container.appendChild(qBlock);
+    });
+
+    function calculateScore() {
+        const form = document.getElementById('quizForm');
+        if (!form.checkValidity()) {
+            alert("Please answer all 9 questions before submitting.");
+            return;
+        }
+
+        let totalScore = 0;
+        let selfHarmTriggered = false;
+
+        questions.forEach((_, qIdx) => {
+            const selected = document.querySelector(`input[name="q${qIdx}"]:checked`);
+            const value = parseInt(selected.value);
+            totalScore += value;
+
+            // Question index 8 is the self-harm question
+            if (qIdx === 8 && value > 0) {
+                selfHarmTriggered = true;
             }
-            st.info(f"🔒 Mapped under confidential reference token: **{generated_token}**.")
+        });
 
-elif user_role == "🩺 Clinician Diagnostic Desk":
-    st.title("🩺 Clinician Diagnostic Desk")
-    st.caption("Secure Intake Portal — Lead Consultant: Ezekiel Kiago Wangunyu")
-    st.markdown("---")
-    
-    col1, col2 = st.columns(2)
-    with col1:
-        st.markdown("### Anonymized Intake Action Feed")
-        if check_empty_records(st.session_state.staff_records):
-            st.info("No active staff assessments recorded yet.")
-        else:
-            st.dataframe(pd.DataFrame(st.session_state.staff_records), use_container_width=True)
-            
-        st.markdown("---")
-        st.markdown("### 🔐 Secure Identity Matrix Lookup")
-        lookup_token = st.text_input("Enter Patient Reference Token to verify identity (e.g., VIVO-1000):")
-        if lookup_token:
-            if lookup_token in st.session_state.token_registry:
-                identity_data = st.session_state.token_registry[lookup_token]
-                st.success(f"**Identity Verified Successfully:**")
-                st.write(f"👤 **Staff Name:** {identity_data['Real Name']}")
-                st.write(f"🆔 **Payroll Number:** {identity_data['Payroll ID']}")
-                st.write(f"🏢 **Operating Unit:** {identity_data['Department']}")
-                st.write(f"📊 **Initial Triage Mapped Metrics:** {identity_data['Score']}")
-            else:
-                st.error("Token not found or invalid lookup permissions.")
+        displayResult(totalScore, selfHarmTriggered);
+    }
+
+    function displayResult(score, selfHarm) {
+        const resultDiv = document.getElementById('result');
+        const alertBox = document.getElementById('alertBox');
         
-    with col2:
-        st.markdown("### 🛠️ Record On-Site Case Assessment & Action")
-        with st.form(key="notes_form_v2"):
-            is_empty_selection = check_empty_records(st.session_state.staff_records)
-            
-            if is_empty_selection:
-                ref_id = st.text_input("Patient Reference Token:", value="VIVO-1000")
-            else:
-                token_options_pool = [r["Reference Token"] for r in st.session_state.staff_records]
-                ref_id = st.selectbox("Select Patient Reference Token:", token_options_pool)
-                
-            mse_status = st.multiselect("MSE Indicators Observed:", ["Cognitive Slowing", "Affective Flattening", "Hyper-vigilance", "Extreme Exhaustion"])
-            clinical_action = st.selectbox("Select Intervention Pathway Execution:", action_options_pool)
-            clinical_notes = st.text_area("Specific Treatment & Follow-up Recommendations")
+        resultDiv.style.display = 'block';
+        alertBox.style.display = selfHarm ? 'block' : 'none';
+        
+        let severity = "";
+        let className = "";
+
+        if (score <= 4) {
+            severity = "Minimal Depression";
+            className = "severity-minimal";
+        } else if (score <= 9) {
+            severity = "Mild Depression";
+            className = "severity-mild";
+        } else if (score <= 14) {
+            severity = "Moderate Depression";
+            className = "severity-moderate";
+        } else if (score <= 19) {
+            severity = "Moderately Severe Depression";
+            className = "severity-moderate";
+        } else {
+            severity = "Severe Depression";
+            className = "severity-severe";
+        }
+
+        resultDiv.className = className;
+        resultDiv.innerHTML = `<strong>Your Score: ${score} / 27</strong><br>Classification: ${severity}<br><br><small>Disclaimer: This screening tool is for educational purposes and does not replace a professional clinical diagnosis.</small>`;
+        
+        // Optional: Smooth scroll to results
+        resultDiv.scrollIntoView({ behavior: 'smooth' });
+    }
+</script>
+
+</body>
+</html>
