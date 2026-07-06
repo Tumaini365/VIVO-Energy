@@ -10,14 +10,12 @@ st.set_page_config(
 )
 
 # ==========================================
-# INITIALIZE SYSTEM MEMORY SPACE
+# INITIALIZE SYSTEM MEMORY SPACE (SESSION STATE)
 # ==========================================
 if "initialized" not in st.session_state:
     st.session_state.initialized = True
     st.session_state.staff_records = []
     st.session_state.clinical_records = []
-    
-    # Secure backend map linking tokens to real employee data
     st.session_state.token_registry = {}
     
     st.session_state.dept_scores = {"Corporate & HR": 0.0, "Retail Management": 0.0, "Depots & Logistics": 0.0, "Engineering": 0.0}
@@ -36,14 +34,14 @@ user_role = st.sidebar.radio(
 )
 
 st.sidebar.markdown("---")
-if st.sidebar.button("重建 🧹 Reset Workspace"):
+if st.sidebar.button("🧹 Reset Workspace"):
     st.session_state.staff_records = []
     st.session_state.clinical_records = []
     st.session_state.token_registry = {}
     for d in st.session_state.dept_scores:
         st.session_state.dept_scores[d] = 0.0
         st.session_state.dept_counts[d] = 0
-    st.sidebar.success("All data reset!")
+    st.sidebar.success("All dynamic entries cleared!")
     time.sleep(0.5)
     st.rerun()
 
@@ -58,10 +56,10 @@ if user_role == "👤 Staff Triage Portal":
     score_map = {"Never": 1, "Rarely": 2, "Frequently": 3, "Always": 4}
     
     with st.form("triage_form"):
-        st.subheader("Personal Identification (Used for secure Token Generation)")
+        st.subheader("Personal Identification")
         staff_name = st.text_input("Full Name:", placeholder="e.g., John Kamau")
         staff_id = st.text_input("Vivo Staff Payroll Number:", placeholder="e.g., VEK-8840")
-        target_dept = st.selectbox("Select Your Operational Department:", ["Corporate & HR", "Retail Management", "Depots & Logistics", "Engineering"])
+        target_dept = st.selectbox("Select Your Department:", ["Corporate & HR", "Retail Management", "Depots & Logistics", "Engineering"])
         
         st.markdown("---")
         st.subheader("Psychometric Assessment Questions")
@@ -95,7 +93,7 @@ if user_role == "👤 Staff Triage Portal":
 # ==========================================
 elif user_role == "📊 HR & HSSEQ Admin Dashboard":
     st.title("📊 Macro-Level Organizational Health Dashboard")
-    st.caption("Anonymized Analytics & Fatigue Audits (Strictly No PII / Individual Names Displayed)")
+    st.caption("Anonymized Analytics & Fatigue Audits (Strictly No PII Displayed)")
     st.markdown("---")
     
     total_screened = len(st.session_state.staff_records)
@@ -118,8 +116,13 @@ elif user_role == "📊 HR & HSSEQ Admin Dashboard":
         with col_chart1:
             st.markdown("#### 📉 Average Fatigue Index Concentration by Department")
             averages = {dept: (st.session_state.dept_scores[dept] / count if count > 0 else 0.0) for dept, count in st.session_state.dept_counts.items()}
-            st.bar_chart(pd.DataFrame(list(averages.values()), index=list(averages.keys()), columns=["Fatigue/Burnout Index Score"]))
+            
+            chart_vals = list(averages.values())
+            chart_idx = list(averages.keys())
+            st.bar_chart(pd.DataFrame(chart_vals, index=chart_idx, columns=["Fatigue/Burnout Index Score"]))
         with col_chart2:
             st.markdown("#### 🛡️ Infrastructure Intervention Metrics")
             st.write(f"* **14-Day Micro-Learning Cues Delivered:** {yellow_count * 14} Pushes")
             st.write(f"* **Active Clinical Cases Pending Intake:** {red_count} Red Alerts")
+            if len(st.session_state.clinical_records) > 0:
+                st.dataframe(pd.DataFrame(st.session_state.clinical_records), use_container_width=True)
