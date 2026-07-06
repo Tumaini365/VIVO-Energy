@@ -1,73 +1,89 @@
-import sys
+import streamlit as st
 import time
 
-def run_triage_demo():
-    print("=" * 65)
-    print(" TUMAINI THREE SIXTY FIVE LIMITED — DIGITAL COGNITIVE TRIAGE DEMO")
-    print(" Customized Frontend Risk Stratification Filter for Vivo Energy")
-    print("=" * 65)
-    print("\n[INFO] Initializing Secure Screening Interface (OLBI/GAD-7 Protocol)...")
-    time.sleep(1)
-    
-    print("\nWelcome! Please complete this brief 3-question operational pulse check.")
-    print("Rate each statement from 1 to 4:")
-    print("  1 = Never | 2 = Rarely | 3 = Frequently | 4 = Always\n")
-    
-    try:
-        # Question 1: Operational Exhaustion (OLBI metric)
-        q1 = int(input("[Q1] After a shift/workday, I feel emotionally drained and spent: "))
-        if q1 not in [1, 2, 3, 4]: raise ValueError
-        
-        # Question 2: Cognitive Fatigue (Fit2Drive risk metric)
-        q2 = int(input("[Q2] I find it difficult to concentrate or maintain safety focus: "))
-        if q2 not in [1, 2, 3, 4]: raise ValueError
-        
-        # Question 3: Macro-economic/Sales Pressure (Anxiety proxy)
-        q3 = int(input("[Q3] Stress about quotas, targets, or economic factors keeps me up: "))
-        if q3 not in [1, 2, 3, 4]: raise ValueError
-        
-    except ValueError:
-        print("\n[ERROR] Invalid input. Please enter numbers between 1 and 4 only.")
-        sys.exit()
+# Page Configuration for Corporate Styling
+st.set_page_config(
+    page_title="Tumaini 365 — Digital Triage Demo",
+    page_icon="🧠",
+    layout="centered"
+)
 
-    # Calculate aggregate screening metrics
-    total_score = q1 + q2 + q3
+st.title("🧠 Frontend Risk Stratification Filter")
+st.caption("Customized Cognitive Triage for Vivo Energy Kenya (HSSEQ & HR Divisions)")
+st.markdown("---")
+
+st.markdown("""
+### Welcome to the Operational Pulse Check
+Please complete this brief 3-question assessment. This data acts as an early-warning filter 
+to track fatigue and sub-clinical burnout before they escalate into safety risks or medical claims.
+""")
+
+# Scoring mapping dictionary
+score_map = {
+    "Never": 1,
+    "Rarely": 2,
+    "Frequently": 3,
+    "Always": 4
+}
+
+# Interactive Questionnaire Form
+with st.form("triage_form"):
+    q1_choice = st.radio(
+        "**[Q1] After an operational shift or a long workday, I feel emotionally drained and completely spent:**",
+        ["Never", "Rarely", "Frequently", "Always"],
+        index=0
+    )
     
-    print("\n" + "-" * 50)
-    print("[PROCESSING] Analyzing psychometric indicators...")
-    time.sleep(1.5)
-    print("[PROCESSING] Cross-referencing against HSSEQ safety baselines...")
-    time.sleep(1.0)
-    print("-" * 50 + "\n")
+    q2_choice = st.radio(
+        "**[Q2] I find it difficult to concentrate, maintain strict safety focus, or keep track of complex tasks:**",
+        ["Never", "Rarely", "Frequently", "Always"],
+        index=0
+    )
     
-    print("=" * 55)
-    print(f"TRIAGE RESULT: TOTAL OPERATIONAL RISK SCORE = {total_score} / 12")
-    print("=" * 55)
+    q3_choice = st.radio(
+        "**[Q3] Anxiety regarding performance targets, strict logistics quotas, or macroeconomic stressors disrupts my sleep:**",
+        ["Never", "Rarely", "Frequently", "Always"],
+        index=0
+    )
     
-    # Automated Risk Stratification Logic
+    submit_button = st.form_submit_button("Submit Diagnostic Pulse Check")
+
+# Processing Logic upon Form Submission
+if submit_button:
+    # Compute total psychometric score
+    total_score = score_map[q1_choice] + score_map[q2_choice] + score_map[q3_choice]
+    
+    with st.spinner("Processing psychometric vectors against safety baselines..."):
+        time.sleep(1.2)
+        
+    st.markdown("### 📊 Assessment Stratification")
+    st.metric(label="Total Operational Risk Score", value=f"{total_score} / 12")
+    
+    # Risk Matrix Evaluation
     if total_score <= 5:
-        print("STATUS LEVEL: [ GREEN ] — LOW COGNITIVE RISK")
-        print("RECOMMENDED PATHWAY:")
-        print(" -> Employee is operating well within optimal psychological thresholds.")
-        print(" -> Action: Push standard digital self-care toolkits & wellness app tips.")
+        st.success("### STATUS LEVEL: [ GREEN ] — LOW COGNITIVE RISK")
+        st.markdown("""
+        **Recommended Pathway:**
+        * **Optimal Performance:** Employee is operating well within safe psychological and fatigue thresholds.
+        * **Action Triggered:** Automated delivery of standard digital self-care toolkits and micro-learning mental fitness modules to maintain resilience.
+        """)
         
     elif 6 <= total_score <= 9:
-        print("STATUS LEVEL: [ YELLOW ] — FUNCTIONAL BURNOUT RISK")
-        print("RECOMMENDED PATHWAY (Tumaini Early Intervention):")
-        print(" -> Warning: Sub-clinical fatigue detected. Risk of presenteeism or safety slip.")
-        print(" -> Action: Trigger the 14-Day Micro-Learning Push via automated loops.")
-        print(" -> Action: Flag for a voluntary Monthly 'Wellness Booster' Pod session.")
+        st.warning("### STATUS LEVEL: [ YELLOW ] — FUNCTIONAL BURNOUT RISK")
+        st.markdown("""
+        **Recommended Pathway (Tumaini Early Intervention):**
+        * **Early-Warning Indicator:** Sub-clinical fatigue detected. Increased risk of operational errors, presenteeism, or safety slip-ups.
+        * **Action Triggered:** Initiating the **14-Day Micro-Learning Push** via automated, bite-sized WhatsApp/email cues.
+        * **Next Steps:** Prioritizing the employee for a voluntary slot in the upcoming **Monthly Wellness Booster Pod**.
+        """)
         
     else:
-        print("STATUS LEVEL: [ RED ] — ACUTE CRISIS / HIGH SAFETY RISK")
-        print("RECOMMENDED PATHWAY (Immediate De-escalation):")
-        print(" -> Critical: Immediate risk to cognitive tracking, drive safety, or personal health.")
-        print(" -> Action: Instant hot-link routing to certified Peer Wellness Champions.")
-        print(" -> Action: Expedited priority referral to Vivo Energy's Curative EAP partner.")
-
-    print("\n" + "=" * 65)
-    print("Demo finalized. Tumaini 365 protects 'Goal Zero' before claims happen.")
-    print("=" * 65)
-
-if __name__ == "__main__":
-    run_triage_demo()
+        st.error("### STATUS LEVEL: [ RED ] — ACUTE CRISIS / HIGH SAFETY RISK")
+        st.markdown("""
+        **Recommended Pathway (Immediate Operational De-escalation):**
+        * **Critical Threshold:** Severe exhaustion affecting cognitive tracking and safety compliance. Immediate risk to transport safety or personal health.
+        * **Action Triggered:** Instant, automated priority hot-link routing to certified internal **Peer Wellness Champions**.
+        * **Next Steps:** Expedited referral mechanism directly to Vivo Energy's Curative EAP partner or medical concierge.
+        """)
+        
+    st.info("**Data Safety Note:** This screening is aggregated anonymously at the departmental level to protect employee confidentiality while ensuring macro-level HSSEQ risk reporting.")
