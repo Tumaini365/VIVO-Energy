@@ -9,15 +9,36 @@ st.set_page_config(
     layout="wide"
 )
 
-# Helper function to completely bypass inline logic checks on line 82
+# Helper functions to isolate variable processing from text parsers
 def check_empty_records(records_list):
-    total_len = len(records_list)
-    if total_len == 0:
+    if len(records_list) == 0:
         return True
     return False
 
+def get_green_count(scores_list):
+    count = 0
+    for s in scores_list:
+        if s <= 5:
+            count += 1
+    return count
+
+def get_yellow_count(scores_list):
+    count = 0
+    for s in scores_list:
+        if s >= 6:
+            if s <= 9:
+                count += 1
+    return count
+
+def get_red_count(scores_list):
+    count = 0
+    for s in scores_list:
+        if s >= 10:
+            count += 1
+    return count
+
 # ==========================================
-# INITIALIZE SYSTEM MEMORY SPACE (SESSION STATE)
+# INITIALIZE SYSTEM MEMORY SPACE
 # ==========================================
 if "initialized" not in st.session_state:
     st.session_state.initialized = True
@@ -86,23 +107,7 @@ if user_role == "👤 Staff Triage Portal":
             st.markdown("### 📊 Assessment Stratification")
             st.metric(label="Your Operational Risk Score", value=f"{total_score} / 12")
             
-            if total_score = 10)
-        
-        m1, m2, m3, m4 = st.columns(4)
-        m1.metric("Total Screened", f"{total_screened} Staff")
-        m2.metric("Green Tier", f"{int((green_count/total_screened)*100)}%")
-        m3.metric("Yellow Tier", f"{int((yellow_count/total_screened)*100)}%")
-        m4.metric("Red Tier", f"{int((red_count/total_screened)*100)}%")
-        
-        st.markdown("---")
-        col_chart1, col_chart2 = st.columns(2)
-        with col_chart1:
-            st.markdown("#### 📉 Average Fatigue Index Concentration by Department")
-            averages = {dept: (st.session_state.dept_scores[dept] / count if count > 0 else 0.0) for dept, count in st.session_state.dept_counts.items()}
+            if total_score  0 else 0.0) for dept, count in st.session_state.dept_counts.items()}
             
             chart_vals = list(averages.values())
             chart_idx = list(averages.keys())
-            st.bar_chart(pd.DataFrame(chart_vals, index=chart_idx, columns=["Fatigue/Burnout Index Score"]))
-        with col_chart2:
-            st.markdown("#### 🛡️ Infrastructure Intervention Metrics")
-            st.write(f"* **14-Day Micro-Learning Cues Delivered:** {yellow_count * 14} Pushes")
