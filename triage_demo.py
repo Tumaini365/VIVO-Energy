@@ -89,11 +89,16 @@ elif user_role == "🩺 Clinician Diagnostic Desk":
     col1, col2 = st.columns(2)
     with col1:
         st.markdown("### Active Clinical Referrals (Red/Yellow Tiers)")
-        # Explicit data declaration to avoid translation gaps
+        
+        # Bypassing array filters completely using separate clean string processing variables
+        score_val_a = 10
+        score_val_b = 8
+        score_val_c = 11
+        
         referrals_df = pd.DataFrame({
             "Reference ID": ["VIVO-7831", "VIVO-9022", "VIVO-1145"],
             "Department": ["Logistics (Haulage)", "Retail Operations", "Underwriting Desk"],
-            "Triage Score":,
+            "Triage Score": [score_val_a, score_val_b, score_val_c],
             "Trigger Date": ["2026-07-04", "2026-07-05", "2026-07-06"],
             "Status": ["Pending Intake", "Assigned to Champion", "Booster Pod Scheduled"]
         })
@@ -130,8 +135,14 @@ elif user_role == "📊 HR & HSSEQ Admin Dashboard":
     col_chart1, col_chart2 = st.columns(2)
     with col_chart1:
         st.markdown("#### 📉 Stress/Burnout Concentrations by Department")
+        
+        val_corp = 2.4
+        val_ret = 4.1
+        val_log = 8.7
+        val_eng = 5.3
+        
         chart_data = pd.DataFrame(
-            [2.4, 4.1, 8.7, 5.3],
+            [val_corp, val_ret, val_log, val_eng],
             index=["Corporate & HR", "Retail Management", "Depots & Logistics", "Engineering"],
             columns=["Fatigue/Burnout Index Score"]
         )
