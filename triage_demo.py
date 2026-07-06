@@ -15,25 +15,25 @@ def check_empty_records(records_list):
         return True
     return False
 
-def get_green_count(scores_list):
+def get_green_count(records_list):
     count = 0
-    for s in scores_list:
-        if s <= 5:
+    for r in records_list:
+        if r["Normalized Stress Index"] <= 0.35:
             count += 1
     return count
 
-def get_yellow_count(scores_list):
+def get_yellow_count(records_list):
     count = 0
-    for s in scores_list:
-        if s >= 6:
-            if s <= 9:
-                count += 1
+    for r in records_list:
+        val = r["Normalized Stress Index"]
+        if val > 0.35 and val <= 0.65:
+            count += 1
     return count
 
-def get_red_count(scores_list):
+def get_red_count(records_list):
     count = 0
-    for s in scores_list:
-        if s >= 10:
+    for r in records_list:
+        if r["Normalized Stress Index"] > 0.65:
             count += 1
     return count
 
@@ -45,9 +45,6 @@ if "initialized" not in st.session_state:
     st.session_state.staff_records = []
     st.session_state.clinical_records = []
     st.session_state.token_registry = {}
-    
-    st.session_state.dept_scores = {"Corporate & HR": 0.0, "Retail Management": 0.0, "Depots & Logistics": 0.0, "Engineering": 0.0}
-    st.session_state.dept_counts = {"Corporate & HR": 0, "Retail Management": 0, "Depots & Logistics": 0, "Engineering": 0}
 
 # --- SIDEBAR NAVIGATION ---
 st.sidebar.image("https://icons8.com", width=80)
@@ -66,9 +63,6 @@ if st.sidebar.button("🧹 Reset Workspace"):
     st.session_state.staff_records = []
     st.session_state.clinical_records = []
     st.session_state.token_registry = {}
-    for d in st.session_state.dept_scores:
-        st.session_state.dept_scores[d] = 0.0
-        st.session_state.dept_counts[d] = 0
     st.sidebar.success("All dynamic entries cleared!")
     time.sleep(0.5)
     st.rerun()
@@ -82,14 +76,8 @@ if user_role == "👤 Staff Triage Portal":
     st.markdown("---")
     
     score_map = {
-        "Not at all": 0,
-        "Several days": 1,
-        "More than half the days": 2,
-        "Nearly every day": 3,
-        "Never": 1,
-        "Rarely": 2,
-        "Frequently": 3,
-        "Always": 4
+        "Not at all": 0, "Several days": 1, "More than half the days": 2, "Nearly every day": 3,
+        "Never": 1, "Rarely": 2, "Frequently": 3, "Always": 4
     }
     
     st.subheader("⚙️ Assessment Infrastructure Configuration")
@@ -131,23 +119,23 @@ if user_role == "👤 Staff Triage Portal":
             st.error("⚠️ Error: Name and Payroll fields must be completed to securely generate your clinical token identifier.")
         else:
             if test_mode == "Standard 3-Question Rapid Safety Triage":
-                total_score = score_map[q1] + score_map[q2] + score_map[q3]
+                raw_score = score_map[q1] + score_map[q2] + score_map[q3]
                 max_possible = 12
-                green_limit, yellow_limit = 5, 9
             else:
-                total_score = score_map[g1] + score_map[g2] + score_map[g3] + score_map[g4] + score_map[g5] + score_map[g6] + score_map[g7]
+                raw_score = score_map[g1] + score_map[g2] + score_map[g3] + score_map[g4] + score_map[g5] + score_map[g6] + score_map[g7]
                 max_possible = 21
-                green_limit, yellow_limit = 4, 9
             
+            # Mathematical Normalization Implementation 
+            norm_index = float(raw_score / max_possible)
             generated_token = f"VIVO-{1000 + len(st.session_state.staff_records)}"
             
             st.markdown("### 📊 Assessment Stratification")
-            st.metric(label=f"Your Score ({test_mode})", value=f"{total_score} / {max_possible}")
+            st.metric(label=f"Your Raw Score ({test_mode})", value=f"{raw_score} / {max_possible}")
             
-            if total_score <= green_limit:
+            if norm_index <= 0.35:
                 strat_label = "GREEN"
                 st.success(f"### STATUS LEVEL: [ GREEN ] — Safe Parameters. Token: {generated_token}")
-            elif total_score <= yellow_limit:
+            elif norm_index <= 0.65:
                 strat_label = "YELLOW"
                 st.warning(f"### STATUS LEVEL: [ YELLOW ] — WATCHLIST / EARLY INTERVENTION. Token: {generated_token}")
             else:
@@ -158,7 +146,8 @@ if user_role == "👤 Staff Triage Portal":
                 "Reference Token": generated_token,
                 "Protocol": "Rapid Triage" if max_possible == 12 else "Full GAD-7",
                 "Department": target_dept,
-                "Triage Score": total_score,
+                "Raw Score": raw_score,
+                "Normalized Stress Index": round(norm_index, 2),
                 "Trigger Date": time.strftime("%Y-%m-%d"),
                 "Status": "Action Required" if strat_label != "GREEN" else "Compliant"
             })
@@ -167,12 +156,8 @@ if user_role == "👤 Staff Triage Portal":
                 "Real Name": staff_name,
                 "Payroll ID": staff_id,
                 "Department": target_dept,
-                "Score": f"{total_score} / {max_possible}"
+                "Score": f"{raw_score} / {max_possible} (Index: {round(norm_index, 2)})"
             }
-            
-            normalized_value = (total_score / max_possible) * 10
-            st.session_state.dept_scores[target_dept] += float(normalized_value)
-            st.session_state.dept_counts[target_dept] += 1
             st.info(f"🔒 Mapped under confidential reference token: **{generated_token}**.")
 
 # ==========================================
@@ -184,12 +169,9 @@ elif user_role == "🩺 Clinician Diagnostic Desk":
     st.markdown("---")
     
     col1, col2 = st.columns(2)
-    
     with col1:
         st.markdown("### Anonymized Intake Action Feed")
-        is_empty = check_empty_records(st.session_state.staff_records)
-        
-        if is_empty:
+        if check_empty_records(st.session_state.staff_records):
             st.info("No active staff assessments recorded yet.")
         else:
             st.dataframe(pd.DataFrame(st.session_state.staff_records), use_container_width=True)
@@ -204,11 +186,18 @@ elif user_role == "🩺 Clinician Diagnostic Desk":
                 st.write(f"👤 **Staff Name:** {identity_data['Real Name']}")
                 st.write(f"🆔 **Payroll Number:** {identity_data['Payroll ID']}")
                 st.write(f"🏢 **Operating Unit:** {identity_data['Department']}")
-                st.write(f"📊 **Initial Triage Score:** {identity_data['Score']}")
+                st.write(f"📊 **Initial Triage Mapped Metrics:** {identity_data['Score']}")
             else:
                 st.error("Token not found or invalid lookup permissions.")
         
     with col2:
-        st.markdown("### 🛠️ Record On-Site Case Assessment & Early-Intervention Action")
+        st.markdown("### 🛠️ Record On-Site Case Assessment & Action")
         with st.form("clinical_notes_form"):
             is_empty_selection = check_empty_records(st.session_state.staff_records)
+            patient_options = ["No active profiles"] if is_empty_selection else [r["Reference Token"] for r in st.session_state.staff_records]
+            ref_id = st.selectbox("Select Patient Reference Token", patient_options)
+            mse_status = st.multiselect("MSE Indicators Observed:", ["Cognitive Slowing", "Affective Flattening", "Hyper-vigilance", "Extreme Exhaustion"])
+            clinical_action = st.selectbox(
+                "Select Clinical Intervention Action Execution Path:",
+                [
+                    "Deploy Proactive Digital Self-Care Toolkit (Green Tier)",
